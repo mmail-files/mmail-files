@@ -1,59 +1,77 @@
 import * as React from "react";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Plus, Search, Grid3X3, LayoutGrid, Star, Share2, Trash2, Download, X, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
+import {
+  ArrowLeft, Plus, Search, Grid3X3, LayoutGrid, Star,
+  Share2, Trash2, Download, X, ChevronLeft, ChevronRight,
+  Image as ImageIcon, FolderOpen, Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { photos as configPhotos, albumExtras, type PhotoEntry } from "@/photos-config";
 
-const ALBUMS = [
-  { id: "1", name: "Trip to Vancouver", count: 24, color: "from-blue-400 to-cyan-500", emoji: "🏔️" },
-  { id: "2", name: "Birthday Party", count: 18, color: "from-pink-400 to-rose-500", emoji: "🎂" },
-  { id: "3", name: "Screenshots", count: 47, color: "from-violet-400 to-purple-500", emoji: "📸" },
-  { id: "4", name: "Family", count: 31, color: "from-amber-400 to-orange-500", emoji: "👨‍👩‍👧" },
-];
+const BASE = import.meta.env.BASE_URL;
 
-interface Photo {
-  id: string;
-  label: string;
-  date: string;
-  starred: boolean;
-  color: string;
-  emoji: string;
-  aspect: "square" | "wide" | "tall";
+function photoSrc(filename: string) {
+  return `${BASE}photos/${filename}`;
 }
 
-const PHOTOS: Photo[] = [
-  { id: "1", label: "Sunrise at Stanley Park", date: "Mar 22, 2026", starred: true, color: "from-orange-300 via-rose-300 to-pink-400", emoji: "🌅", aspect: "wide" },
-  { id: "2", label: "Hiking trail", date: "Mar 22, 2026", starred: false, color: "from-green-400 to-emerald-600", emoji: "🌲", aspect: "square" },
-  { id: "3", label: "City skyline", date: "Mar 21, 2026", starred: false, color: "from-slate-400 to-blue-600", emoji: "🏙️", aspect: "square" },
-  { id: "4", label: "Mountain view", date: "Mar 20, 2026", starred: true, color: "from-sky-300 to-indigo-500", emoji: "⛰️", aspect: "tall" },
-  { id: "5", label: "Dinner with friends", date: "Mar 18, 2026", starred: false, color: "from-amber-300 to-yellow-500", emoji: "🍜", aspect: "square" },
-  { id: "6", label: "Coffee morning", date: "Mar 17, 2026", starred: false, color: "from-brown-300 to-amber-700", emoji: "☕", aspect: "square" },
-  { id: "7", label: "Beach walk", date: "Mar 15, 2026", starred: true, color: "from-cyan-300 to-blue-400", emoji: "🏖️", aspect: "wide" },
-  { id: "8", label: "Market day", date: "Mar 14, 2026", starred: false, color: "from-red-300 to-rose-500", emoji: "🥦", aspect: "square" },
-  { id: "9", label: "Night lights", date: "Mar 12, 2026", starred: false, color: "from-purple-600 to-indigo-800", emoji: "✨", aspect: "square" },
-  { id: "10", label: "Pet photo", date: "Mar 10, 2026", starred: true, color: "from-amber-200 to-orange-300", emoji: "🐶", aspect: "square" },
-  { id: "11", label: "Sunset drive", date: "Mar 8, 2026", starred: false, color: "from-orange-400 to-red-500", emoji: "🌇", aspect: "wide" },
-  { id: "12", label: "Garden", date: "Mar 5, 2026", starred: false, color: "from-green-300 to-lime-500", emoji: "🌸", aspect: "square" },
-];
+function buildAlbums(photos: PhotoEntry[]) {
+  const map: Record<string, number> = {};
+  for (const p of photos) {
+    const name = p.album ?? "Uncategorised";
+    map[name] = (map[name] ?? 0) + 1;
+  }
+  const emojiMap: Record<string, string> = {};
+  for (const e of albumExtras) emojiMap[e.name] = e.emoji;
+  const defaultEmojis = ["📁", "🖼️", "🌟", "📷", "🎉", "🌍"];
+  return Object.entries(map).map(([name, count], i) => ({
+    name,
+    count,
+    emoji: emojiMap[name] ?? defaultEmojis[i % defaultEmojis.length],
+  }));
+}
 
-function PhotoCard({ photo, onClick }: { photo: Photo; onClick: () => void }) {
+interface DisplayPhoto extends PhotoEntry {
+  id: string;
+}
+
+function PhotoCard({
+  photo,
+  onClick,
+}: {
+  photo: DisplayPhoto;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div
-      className="group relative cursor-pointer overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-all duration-200"
-      style={{ gridRow: photo.aspect === "tall" ? "span 2" : "span 1", gridColumn: photo.aspect === "wide" ? "span 2" : "span 1" }}
+      className="group relative cursor-pointer overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 bg-muted"
       onClick={onClick}
     >
-      <div className={`w-full h-full min-h-[160px] bg-gradient-to-br ${photo.color} flex items-center justify-center`}>
-        <span className="text-5xl select-none">{photo.emoji}</span>
-      </div>
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      {imgError ? (
+        <div className="w-full h-full min-h-[180px] flex flex-col items-center justify-center text-muted-foreground gap-2 p-4">
+          <ImageIcon className="h-8 w-8 opacity-30" />
+          <p className="text-xs text-center opacity-60 truncate max-w-full">{photo.filename}</p>
+        </div>
+      ) : (
+        <img
+          src={photoSrc(photo.filename)}
+          alt={photo.label}
+          onError={() => setImgError(true)}
+          className="w-full h-full min-h-[180px] object-cover"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-200" />
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <p className="text-white text-sm font-medium truncate">{photo.label}</p>
         <p className="text-white/70 text-xs">{photo.date}</p>
       </div>
+
       {photo.starred && (
         <div className="absolute top-2 right-2">
           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 drop-shadow" />
@@ -63,18 +81,89 @@ function PhotoCard({ photo, onClick }: { photo: Photo; onClick: () => void }) {
   );
 }
 
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+      <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-6">
+        <FolderOpen className="h-10 w-10 text-muted-foreground opacity-50" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">No photos yet</h3>
+      <p className="text-muted-foreground max-w-sm mb-8">
+        Add your photos in two quick steps:
+      </p>
+
+      <div className="text-left w-full max-w-md space-y-4">
+        <div className="flex gap-4 items-start bg-muted/50 rounded-xl p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+            1
+          </div>
+          <div>
+            <p className="font-medium text-sm">Upload your image files</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Drag and drop image files into this folder in the file tree:
+            </p>
+            <code className="inline-block mt-2 px-3 py-1.5 bg-background rounded-lg text-xs font-mono border border-border">
+              artifacts/mmail/public/photos/
+            </code>
+          </div>
+        </div>
+
+        <div className="flex gap-4 items-start bg-muted/50 rounded-xl p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+            2
+          </div>
+          <div>
+            <p className="font-medium text-sm">Add an entry to the config file</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Open this file and add your photo details:
+            </p>
+            <code className="inline-block mt-2 px-3 py-1.5 bg-background rounded-lg text-xs font-mono border border-border">
+              artifacts/mmail/src/photos-config.ts
+            </code>
+            <div className="mt-3 bg-background rounded-lg p-3 border border-border font-mono text-xs leading-relaxed">
+              <span className="text-muted-foreground">{"{"}</span><br />
+              {"  "}<span className="text-blue-500">filename</span>: <span className="text-green-600">"my-photo.jpg"</span>,<br />
+              {"  "}<span className="text-blue-500">label</span>: <span className="text-green-600">"My Photo"</span>,<br />
+              {"  "}<span className="text-blue-500">date</span>: <span className="text-green-600">"Mar 26, 2026"</span>,<br />
+              {"  "}<span className="text-blue-500">starred</span>: <span className="text-orange-500">false</span>,<br />
+              {"  "}<span className="text-blue-500">album</span>: <span className="text-green-600">"Memories"</span>,<br />
+              <span className="text-muted-foreground">{"}"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-8 text-muted-foreground text-sm">
+        The page will refresh automatically once you save the config.
+      </p>
+    </div>
+  );
+}
+
 export default function MPhotos() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "albums">("grid");
-  const [selected, setSelected] = useState<Photo | null>(null);
+  const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DisplayPhoto | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const filtered = PHOTOS.filter((p) =>
+  const allPhotos: DisplayPhoto[] = configPhotos.map((p, i) => ({
+    ...p,
+    id: String(i),
+  }));
+
+  const albums = buildAlbums(allPhotos);
+
+  const inAlbum = activeAlbum
+    ? allPhotos.filter((p) => (p.album ?? "Uncategorised") === activeAlbum)
+    : allPhotos;
+
+  const filtered = inAlbum.filter((p) =>
     p.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openPhoto = (photo: Photo) => {
+  const openPhoto = (photo: DisplayPhoto) => {
     const idx = filtered.indexOf(photo);
     setSelected(photo);
     setSelectedIndex(idx);
@@ -92,6 +181,23 @@ export default function MPhotos() {
     setSelectedIndex(idx);
   };
 
+  const LightboxImage = ({ photo }: { photo: DisplayPhoto }) => {
+    const [err, setErr] = useState(false);
+    return err ? (
+      <div className="w-80 h-80 rounded-3xl bg-muted flex flex-col items-center justify-center gap-3 shadow-2xl">
+        <ImageIcon className="h-16 w-16 text-muted-foreground opacity-40" />
+        <p className="text-muted-foreground text-sm">{photo.filename}</p>
+      </div>
+    ) : (
+      <img
+        src={photoSrc(photo.filename)}
+        alt={photo.label}
+        onError={() => setErr(true)}
+        className="max-h-[70vh] max-w-[80vw] rounded-2xl object-contain shadow-2xl"
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top Nav */}
@@ -106,11 +212,25 @@ export default function MPhotos() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 shadow-md">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-pink-600 shadow-md">
               <ImageIcon className="h-4 w-4 text-white" />
             </div>
             <span className="font-bold text-xl tracking-tight">Mphotos</span>
           </div>
+          {activeAlbum && (
+            <>
+              <span className="text-muted-foreground">/</span>
+              <span className="font-medium">{activeAlbum}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={() => setActiveAlbum(null)}
+              >
+                ✕ Clear
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="flex-1 max-w-xl px-6">
@@ -142,12 +262,8 @@ export default function MPhotos() {
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
-          <Button className="gap-2 rounded-full ml-2">
-            <Plus className="h-4 w-4" />
-            Upload
-          </Button>
           <Avatar className="h-9 w-9 border border-border/50 shadow-sm ml-1">
-            <AvatarImage src={`${import.meta.env.BASE_URL}images/avatar.png`} alt="Mavandeep" className="object-cover" />
+            <AvatarImage src={`${BASE}images/avatar.png`} alt="Mavandeep" className="object-cover" />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">M</AvatarFallback>
           </Avatar>
         </div>
@@ -157,40 +273,57 @@ export default function MPhotos() {
         {view === "albums" ? (
           <div className="max-w-5xl mx-auto p-8">
             <h2 className="text-2xl font-bold mb-6">Albums</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {ALBUMS.map((album) => (
-                <div
-                  key={album.id}
-                  className="group cursor-pointer"
-                  onClick={() => setView("grid")}
-                >
-                  <div className={`aspect-square rounded-2xl bg-gradient-to-br ${album.color} flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02]`}>
-                    <span className="text-5xl">{album.emoji}</span>
+            {albums.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                {albums.map((album) => (
+                  <div
+                    key={album.name}
+                    className="group cursor-pointer"
+                    onClick={() => { setActiveAlbum(album.name); setView("grid"); }}
+                  >
+                    <div className="aspect-square rounded-2xl bg-muted flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] overflow-hidden">
+                      {allPhotos.find((p) => (p.album ?? "Uncategorised") === album.name) ? (
+                        <img
+                          src={photoSrc(allPhotos.find((p) => (p.album ?? "Uncategorised") === album.name)!.filename)}
+                          alt={album.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : null}
+                      <span className="text-5xl absolute">{album.emoji}</span>
+                    </div>
+                    <p className="mt-2 font-semibold text-sm truncate">{album.name}</p>
+                    <p className="text-xs text-muted-foreground">{album.count} {album.count === 1 ? "item" : "items"}</p>
                   </div>
-                  <p className="mt-2 font-semibold text-sm truncate">{album.name}</p>
-                  <p className="text-xs text-muted-foreground">{album.count} items</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="max-w-5xl mx-auto p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Photos</h2>
-              <Badge variant="secondary" className="rounded-full">{filtered.length} photos</Badge>
+              <h2 className="text-2xl font-bold">{activeAlbum ?? "Photos"}</h2>
+              {filtered.length > 0 && (
+                <Badge variant="secondary" className="rounded-full">
+                  {filtered.length} {filtered.length === 1 ? "photo" : "photos"}
+                </Badge>
+              )}
             </div>
 
-            {filtered.length === 0 ? (
+            {allPhotos.length === 0 ? (
+              <EmptyState />
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
                 <ImageIcon className="h-16 w-16 mb-4 opacity-30" />
                 <p className="text-lg font-medium">No photos found</p>
                 <p className="text-sm">Try a different search term</p>
               </div>
             ) : (
-              <div
-                className="grid gap-3"
-                style={{ gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "160px" }}
-              >
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4" style={{ gridAutoRows: "180px" }}>
                 {filtered.map((photo) => (
                   <PhotoCard key={photo.id} photo={photo} onClick={() => openPhoto(photo)} />
                 ))}
@@ -202,8 +335,10 @@ export default function MPhotos() {
 
       {/* Lightbox */}
       {selected && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={() => setSelected(null)}>
-          {/* Lightbox toolbar */}
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex flex-col"
+          onClick={() => setSelected(null)}
+        >
           <div
             className="flex items-center justify-between px-6 py-4"
             onClick={(e) => e.stopPropagation()}
@@ -236,8 +371,10 @@ export default function MPhotos() {
             </div>
           </div>
 
-          {/* Photo display */}
-          <div className="flex-1 flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex-1 flex items-center justify-center relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="icon"
@@ -247,9 +384,7 @@ export default function MPhotos() {
               <ChevronLeft className="h-7 w-7" />
             </Button>
 
-            <div className={`w-[420px] h-[420px] rounded-3xl bg-gradient-to-br ${selected.color} flex items-center justify-center shadow-2xl`}>
-              <span className="text-9xl select-none">{selected.emoji}</span>
-            </div>
+            <LightboxImage photo={selected} />
 
             <Button
               variant="ghost"
@@ -261,15 +396,24 @@ export default function MPhotos() {
             </Button>
           </div>
 
-          {/* Filmstrip */}
-          <div className="flex items-center justify-center gap-2 px-6 py-4 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center justify-center gap-2 px-6 py-4 overflow-x-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {filtered.map((p, i) => (
               <div
                 key={p.id}
                 onClick={() => { setSelected(p); setSelectedIndex(i); }}
-                className={`flex-shrink-0 w-14 h-14 rounded-lg bg-gradient-to-br ${p.color} flex items-center justify-center cursor-pointer transition-all ${i === selectedIndex ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"}`}
+                className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden cursor-pointer transition-all bg-muted ${i === selectedIndex ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"}`}
               >
-                <span className="text-xl">{p.emoji}</span>
+                <img
+                  src={photoSrc(p.filename)}
+                  alt={p.label}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
               </div>
             ))}
           </div>
