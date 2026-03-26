@@ -9,7 +9,8 @@ import {
   Star, 
   MailWarning,
   Printer,
-  ChevronLeft
+  ChevronLeft,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
