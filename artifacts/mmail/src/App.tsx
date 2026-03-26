@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MailClient from "@/pages/mail-client";
+import MPhotos from "@/pages/mphotos";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -18,6 +19,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={MailClient} />
+      <Route path="/mphotos" component={MPhotos} />
       <Route component={NotFound} />
     </Switch>
   );

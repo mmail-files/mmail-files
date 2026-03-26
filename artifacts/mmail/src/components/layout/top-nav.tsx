@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Menu, Settings, HelpCircle, LayoutGrid } from "lucide-react";
+import { Search, Settings, HelpCircle, LayoutGrid, Mail, Image as ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,12 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useLocation } from "wouter";
 
 interface TopNavProps {
   onSearch: (query: string) => void;
 }
 
 export function TopNav({ onSearch }: TopNavProps) {
+  const [, navigate] = useLocation();
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border/40 bg-background/95 px-4 backdrop-blur z-20">
       <div className="flex items-center gap-2">
@@ -42,9 +44,41 @@ export function TopNav({ onSearch }: TopNavProps) {
         <Button variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-foreground">
           <Settings className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-foreground">
-          <LayoutGrid className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-foreground">
+              <LayoutGrid className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-xl mt-2">
+            <DropdownMenuLabel className="text-xs text-muted-foreground px-2 pb-1">Mavandeep's Apps</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer rounded-lg p-3 gap-3"
+              onClick={() => navigate("/")}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600">
+                <Mail className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Mmail</p>
+                <p className="text-xs text-muted-foreground">Email</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer rounded-lg p-3 gap-3"
+              onClick={() => navigate("/mphotos")}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-400 to-pink-600">
+                <ImageIcon className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Mphotos</p>
+                <p className="text-xs text-muted-foreground">Photos</p>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
