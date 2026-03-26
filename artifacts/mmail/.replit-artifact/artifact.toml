@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Mmail"
+version = "1.0.0"
+id = "artifacts/mmail"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22183
+
+[services.development]
+run = "pnpm --filter @workspace/mmail run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mmail", "run", "build" ]
+publicDir = "artifacts/mmail/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22183"
+BASE_PATH = "/"

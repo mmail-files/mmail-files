@@ -1,0 +1,18 @@
+packages:
+  "date-fns": "For formatting email dates elegantly"
+  "framer-motion": "For smooth transitions between emails and UI states"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to safely merge tailwind classes"
+
+images:
+  - path: "artifacts/mmail/public/images/mmail-logo.png"
+    description: "A sleek, minimalist 3D icon of the letter 'M' in vibrant deep blue and soft white, suitable for a modern tech company or email client branding, on a transparent background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/mmail/public/images/avatar.png"
+    description: "A professional, modern illustrated avatar of a friendly person named Mavandeep, styled with a clean flat vector aesthetic, deep blue background"
+    aspect_ratio: "1:1"
+
+notes:
+  - This is a static mockup. All data is hardcoded in the frontend.
+  - State is managed via React useState in the main page component.
+  - Uses Shadcn UI Sidebar and Dialog components.
