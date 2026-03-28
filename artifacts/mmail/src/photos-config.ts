@@ -6,22 +6,22 @@
 // ============================================================
 
 export interface PhotoEntry {
-  filename: string;   // the image filename inside public/photos/ (e.g. "trip.jpg")
-  label: string;      // display name shown on hover and in the lightbox
-  date: string;       // date string shown in the lightbox (e.g. "Mar 26, 2026")
-  starred?: boolean;  // show a gold star badge — set to true for favourites
-  album?: string;     // optional album name for grouping
+  filename: string; // the image filename inside public/photos/ (e.g. "trip.jpg")
+  label: string; // display name shown on hover and in the lightbox
+  date: string; // date string shown in the lightbox (e.g. "Mar 26, 2026")
+  starred?: boolean; // show a gold star badge — set to true for favourites
+  album?: string; // optional album name for grouping
 }
 
 export const photos: PhotoEntry[] = [
   // --- Add your photos below ---
-  // {
-  //   filename: "my-photo.jpg",
-  //   label: "My Photo",
-  //   date: "Mar 26, 2026",
-  //   starred: false,
-  //   album: "Memories",
-  // },
+  {
+    filename: "mavandeep-school.jpg",
+    label: "Mavandeep at School",
+    date: "Mar 18, 2026",
+    starred: true,
+    album: "School",
+  },
 ];
 
 // ============================================================
